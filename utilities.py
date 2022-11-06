@@ -24,5 +24,7 @@ def threshold(image, th, max_th):
     # convert the image to grayscale
     grayscale = RGB_to_GrayScale(image)
 
-    (T, thresh) = cv2.threshold(grayscale, th, max_th, cv2.THRESH_BINARY)
+    (T, thresh) = cv2.threshold(grayscale, th, max_th, cv2.THRESH_BINARY_INV)
     return thresh
+
+
