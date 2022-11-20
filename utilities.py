@@ -1,6 +1,7 @@
 import cv2
 import imutils
-
+import pytesseract
+pytesseract.pytesseract.tesseract_cmd = "C:\Program Files\Tesseract-OCR\\tesseract.exe"
 
 # function that loads and displays an image
 # @input: image
@@ -54,13 +55,15 @@ def almost_equals(coord):
 # @output : contours
 def pre_process_contours(gray):
     # noise reduce
-    gray_filter = cv2.bilateralFilter(gray, 40, 40, 30)  # 35, 25, 25 / 100, 70, 70)
-    # gray_filter = cv2.bilateralFilter(gray, 100, 65, 65)
-    # display_image(gray_filter)
+    #gray_filter = cv2.bilateralFilter(gray, 70, 10, 100)  # 35, 25, 25 / 100, 70, 70)
+    gray_filter = cv2.bilateralFilter(gray,  40, 40, 30)
+    #gray_filter=cv2.GaussianBlur(gray, (5, 5), 1)
+    #gray_filter=cv2.medianBlur(gray, 9)
+    #display_image(gray_filter)
 
     # canny : all contours
-    gray_contours = cv2.Canny(gray_filter, 30, 200)
-    # display_image(gray_contours)
+    gray_contours = cv2.Canny(gray_filter, 40, 300)
+    display_image(gray_contours)
 
     # find contours
     points = cv2.findContours(gray_contours.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # we want 4 points
@@ -93,6 +96,74 @@ def detect_polygone(gray):
             if almost_equals(coord):
                 rect_contours = poly_points
                 break
+
+    return rect_contours
+
+# HAAR CASCADE
+def detect_haar_cascade(gray,image):
+
+    detector = cv2.CascadeClassifier("haarcascade_russian_plate_number.xml")
+
+    detections = detector.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=7)
+
+    # boundingbox
+    for (x, y, w, h) in detections:
+
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+
+    return image
+
+def detect_all_contours(gray, image):
+    contours = pre_process_contours(gray)
+
+    for contour in contours:
+        poly_points = cv2.approxPolyDP(contour, 10, True)
+        print(len(poly_points))
+        cv2.drawContours(image, [poly_points], 0, (0, 255, 0), 3)
+        cv2.imshow('Contours', image)
+        cv2.waitKey(0)
+
+    return
+
+
+def crop_img(contour,image):
+    x, y, w, h = cv2.boundingRect(contour)
+    img = image[y:y + h, x:x + w]
+    cv2.imshow('crop', img)
+
+
+# 2nd method
+def detect_polygone_chars(gray):
+
+    contours = pre_process_contours(gray)
+
+    rect_contours = None  # plate contour we are looking for
+
+    for contour in contours:
+
+        poly_points = cv2.approxPolyDP(contour, 10, True)
+        print(len(poly_points))
+        coord = []  # coordinates
+        if len(poly_points) == 4:  # a rectangle has 4 key points
+            for i in range(4):
+                xi, yi = xy_coordinates(poly_points, i)
+                coord.append([int(xi), int(yi)])
+                print(coord)
+
+            # check if parallel sides are almost equal
+            # check if contains letters
+            if almost_equals(coord):
+                print("its almost equal")
+
+                x, y, w, h = cv2.boundingRect(contour)
+                # Crop the bounding rectangle out of img
+                img = gray[y:y + h, x:x + w]
+                print(f" chars {pytesseract.image_to_string(img)}")
+
+                if pytesseract.image_to_string(img) != "":
+                    rect_contours = poly_points
+                    break
 
     return rect_contours
 
