@@ -1,3 +1,7 @@
 .idea
 __pycache__/
+yolo/Data_labels/
 license_images/
+yolo/lapi.weights
+yolo/darknet-yolov3.cfg
+char_detection/frozen_east_text_detection.pb
