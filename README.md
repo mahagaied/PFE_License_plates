@@ -1,3 +1,6 @@
 # PFE_license_plates
 
-download license_images here : https://flic.kr/s/aHBqjAe5gi
+
+Data source: https://platesmania.com
+
+LabelImg download : https://github.com/mahagaied/labelImg.git

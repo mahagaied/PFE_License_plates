@@ -1,7 +1,9 @@
 import cv2
 import imutils
 import pytesseract
+
 pytesseract.pytesseract.tesseract_cmd = "C:\Program Files\Tesseract-OCR\\tesseract.exe"
+
 
 # function that loads and displays an image
 # @input: image
@@ -24,28 +26,29 @@ def RGB_to_GrayScale(image):
 # @output : image after applying thresholds (black and white)
 def threshold(image, th, max_th):
     # convert the image to grayscale
-    grayscale = RGB_to_GrayScale(image)
+    # grayscale = RGB_to_GrayScale(image)
 
-    (T, thresh) = cv2.threshold(grayscale, th, max_th, cv2.THRESH_BINARY_INV)
+    (T, thresh) = cv2.threshold(image, th, max_th, cv2.THRESH_BINARY_INV)
     return thresh
+
 
 # function that gives x, y for each point i from an numpy array
 # @input : np array with all the points, index of the point
 # @output : xi, yi
 def xy_coordinates(poly_points, i):
-
     len_i = len(str(poly_points[i]))
     x, y = str(poly_points[i])[2:len_i - 2].split()
 
     return x, y
 
+
 # function that checks if 2 parallel sides are almost equal
 # @input : coordinates
 # @output : boolean
 def almost_equals(coord):
-    y_left = abs(coord[0][1]-coord[3][1]) # longeur verticale
-    y_right = abs(coord[1][1]-coord[2][1])
-    if y_right - 5 <= y_left <= y_right + 5 :
+    y_left = abs(coord[0][1] - coord[3][1])  # longeur verticale
+    y_right = abs(coord[1][1] - coord[2][1])
+    if y_right - 5 <= y_left <= y_right + 5:
         return True
     return False
 
@@ -55,11 +58,11 @@ def almost_equals(coord):
 # @output : contours
 def pre_process_contours(gray):
     # noise reduce
-    #gray_filter = cv2.bilateralFilter(gray, 70, 10, 100)  # 35, 25, 25 / 100, 70, 70)
-    gray_filter = cv2.bilateralFilter(gray,  40, 40, 30)
-    #gray_filter=cv2.GaussianBlur(gray, (5, 5), 1)
-    #gray_filter=cv2.medianBlur(gray, 9)
-    #display_image(gray_filter)
+    # gray_filter = cv2.bilateralFilter(gray, 70, 10, 100)  # 35, 25, 25 / 100, 70, 70)
+    gray_filter = cv2.bilateralFilter(gray, 40, 40, 30)
+    # gray_filter=cv2.GaussianBlur(gray, (5, 5), 1)
+    # gray_filter=cv2.medianBlur(gray, 9)
+    # display_image(gray_filter)
 
     # canny : all contours
     gray_contours = cv2.Canny(gray_filter, 40, 300)
@@ -85,13 +88,13 @@ def detect_polygone(gray):
     for contour in contours:
         # change 10 for better results
         poly_points = cv2.approxPolyDP(contour, 10, True)  # approximate polygone, 10 fine enough for a rectangle
-        print(len(poly_points))
+        # print(len(poly_points))
         coord = []  # coordinates
         if len(poly_points) == 4:  # a rectangle has 4 key points
             for i in range(4):
                 x, y = xy_coordinates(poly_points, i)
                 coord.append([int(x), int(y)])
-                print(coord)
+                # print(coord)
             # check if parallel sides are almost equal
             if almost_equals(coord):
                 rect_contours = poly_points
@@ -99,20 +102,6 @@ def detect_polygone(gray):
 
     return rect_contours
 
-# HAAR CASCADE
-def detect_haar_cascade(gray,image):
-
-    detector = cv2.CascadeClassifier("haarcascade_russian_plate_number.xml")
-
-    detections = detector.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=7)
-
-    # boundingbox
-    for (x, y, w, h) in detections:
-
-        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-
-    return image
 
 def detect_all_contours(gray, image):
     contours = pre_process_contours(gray)
@@ -127,43 +116,9 @@ def detect_all_contours(gray, image):
     return
 
 
-def crop_img(contour,image):
+def crop_img(contour, image):
     x, y, w, h = cv2.boundingRect(contour)
     img = image[y:y + h, x:x + w]
     cv2.imshow('crop', img)
-
-
-# 2nd method
-def detect_polygone_chars(gray):
-
-    contours = pre_process_contours(gray)
-
-    rect_contours = None  # plate contour we are looking for
-
-    for contour in contours:
-
-        poly_points = cv2.approxPolyDP(contour, 10, True)
-        print(len(poly_points))
-        coord = []  # coordinates
-        if len(poly_points) == 4:  # a rectangle has 4 key points
-            for i in range(4):
-                xi, yi = xy_coordinates(poly_points, i)
-                coord.append([int(xi), int(yi)])
-                print(coord)
-
-            # check if parallel sides are almost equal
-            # check if contains letters
-            if almost_equals(coord):
-                print("its almost equal")
-
-                x, y, w, h = cv2.boundingRect(contour)
-                # Crop the bounding rectangle out of img
-                img = gray[y:y + h, x:x + w]
-                print(f" chars {pytesseract.image_to_string(img)}")
-
-                if pytesseract.image_to_string(img) != "":
-                    rect_contours = poly_points
-                    break
-
-    return rect_contours
+    return img
 
