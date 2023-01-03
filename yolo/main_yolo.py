@@ -16,9 +16,9 @@ if __name__ == '__main__':
 
 
     # Detect
-    # path = "license_images/8.png"
-    path = "Data_labels/3.png"
-    coord,lp_image = utilities_yolo.detect(path, net, classes)
+    path = "../license_images/3.png"
+    # path = "Data_labels/1.png"
+    coord,lp_image = utilities_yolo.detection(path, net, classes)
 
     cv2.imshow("detect", lp_image)
 
@@ -28,4 +28,9 @@ if __name__ == '__main__':
 
     cv2.imshow("plate", LP)
     cv2.waitKey(0)
+
+    text = utilities_yolo.recognition(LP,lp_image,coord)
+    cv2.imshow("recognition",text)
+    cv2.waitKey(0)
+
     cv2.destroyAllWindows()

@@ -18,14 +18,23 @@ if __name__ == '__main__':
     cv2.imshow('Contours', image)
     cv2.waitKey(0)
 
-    # recognition
-    plate = utilities.crop_img(rect_contours, gray)
-    thresh_plate = utilities.threshold(plate, 150, 255)  # 150 for 3,5; 170 for 1
-    cv2.imshow("threshPlate", thresh_plate)
+    # crop
+    plate = utilities.crop_img(rect_contours, image)
+    coord = cv2.boundingRect(rect_contours)
+
+    text = utilities.recognition(plate, image, coord)
+    cv2.imshow('text', text)
     cv2.waitKey(0)
-    print(f"Plate Number : {pytesseract.image_to_string(thresh_plate, config='--psm 11')}")
 
     cv2.destroyAllWindows()
+
+
+
+
+
+
+
+
     # sans thresh: 1,5,6 NO, 3,4 YES
     # with thresh 170 : 3,4,6 NO, 1,5 YES
     # with thresh 150: 1,6 NO, 3,4,5 YES ; 

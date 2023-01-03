@@ -3,10 +3,11 @@ import numpy as np
 import cv2
 import pytesseract
 
+
 pytesseract.pytesseract.tesseract_cmd = "C:\Program Files\Tesseract-OCR\\tesseract.exe"
 
 
-def char_detector(image, net):
+def char_detect(image, net):
     orig = image
     (H, W) = image.shape[:2]
 
@@ -89,6 +90,7 @@ def char_detector(image, net):
     print(max(s_Xs))
 
     cv2.rectangle(orig, (s_x, s_y), (e_x, e_y), (0, 0, 255), 2)
+    coord = s_x,s_y, e_x , e_y
 
     for (startX, startY, endX, endY) in boxes:
         startX = int(startX * rW)
@@ -99,6 +101,35 @@ def char_detector(image, net):
         cv2.rectangle(orig, (startX, startY), (endX, endY), (0, 255, 0), 2)
 
 
-    return orig
+    return orig,coord
 
 
+def crop_plate(img, coordinates):
+    x, y, xe, ye = coordinates
+    crop = img[y-10:ye+5, x:xe+20]
+    return crop
+
+def char_recognition(plate,detected,coord):
+    height, width, _ = plate.shape
+    grayscale = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
+    (T, thresh) = cv2.threshold(grayscale, 120, 255, cv2.THRESH_BINARY_INV)
+    #blur = cv2.GaussianBlur(grayscale, (5, 5), 0)
+    cv2.imshow("threshPlate", thresh)
+    cv2.waitKey(0)
+
+    number_plate = pytesseract.image_to_string(thresh,
+                                               config='-c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    print(f"Plate Number : {number_plate}")
+    print(coord)
+    img = cv2.putText(detected, number_plate, (coord[0], coord[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,
+                      cv2.LINE_AA)
+
+    boxes = pytesseract.image_to_boxes(grayscale)
+    for b in boxes.splitlines():
+        b = b.split(' ')
+        x, y, w, h = int(b[1]), int(b[2]), int(b[3]), int(b[4])
+        cv2.rectangle(plate, (x, height - y), (w, height - h), (0, 0, 255), 1)
+    cv2.imshow('boxes', plate)
+    cv2.waitKey(0)
+
+    return img

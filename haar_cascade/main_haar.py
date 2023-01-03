@@ -4,7 +4,7 @@ import pytesseract
 pytesseract.pytesseract.tesseract_cmd = "C:\Program Files\Tesseract-OCR\\tesseract.exe"
 
 if __name__ == '__main__':
-    path = "../license_images/4.png"
+    path = "../license_images/3.png"
     image = cv2.imread(path)
     cv2.imshow('image', image)
     cv2.waitKey(0)
@@ -20,13 +20,16 @@ if __name__ == '__main__':
     cv2.waitKey(0)
 
     # detect
-    image,plate= utilities_haar.detect_haar_cascade(gray_filter, image)
+    image,coord = utilities_haar.detect_haar_cascade(gray_filter, image)
     cv2.imshow("detection", image)
     cv2.waitKey(0)
 
+    # crop
+    plate = utilities_haar.crop_plate(image, coord)
+    cv2.imshow("plate", plate)
+    cv2.waitKey(0)
 
     #recognition
-    (T, thresh_plate) = cv2.threshold(plate, 150, 255, cv2.THRESH_BINARY_INV)
-    cv2.imshow("threshPlate", thresh_plate)
-    print(f"Plate Number : {pytesseract.image_to_string(thresh_plate,config='--psm 11')}")
+    img = utilities_haar.recognition_haar_cascade(plate, image, coord)
+    cv2.imshow("recognition", img)
     cv2.waitKey(0)
