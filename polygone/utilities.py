@@ -62,7 +62,7 @@ def pre_process_contours(gray):
     gray_filter = cv2.bilateralFilter(gray, 40, 40, 30)
     # gray_filter=cv2.GaussianBlur(gray, (5, 5), 1)
     # gray_filter=cv2.medianBlur(gray, 9)
-    # display_image(gray_filter)
+    display_image(gray_filter)
 
     # canny : all contours
     gray_contours = cv2.Canny(gray_filter, 40, 300)
@@ -132,7 +132,7 @@ def recognition(plate, detected, coord):
     cv2.waitKey(0)
 
     number_plate = pytesseract.image_to_string(thresh,
-                                               config='--psm 11 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+                                               config='-l eng --oem 1 --psm 8')
     print(f"Plate Number : {number_plate}")
     print(coord)
     img = cv2.putText(detected, number_plate, (coord[0], coord[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,

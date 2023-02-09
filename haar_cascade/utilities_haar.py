@@ -31,7 +31,7 @@ def recognition_haar_cascade(plate, detected, coord):
     cv2.waitKey(0)
 
     number_plate = pytesseract.image_to_string(thresh,
-                                               config='--psm 11 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+                                               config='-l eng --oem 1 --psm 8')
     print(f"Plate Number : {number_plate}")
     print(coord)
     img = cv2.putText(detected, number_plate, (coord[0], coord[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,

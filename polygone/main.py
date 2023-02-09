@@ -4,7 +4,7 @@ from pytesseract import pytesseract
 import utilities
 
 if __name__ == '__main__':
-    path = "../license_images/3.png"
+    path = "../license_images/2.png"
     image = cv2.imread(path)
     utilities.display_image(image)
 

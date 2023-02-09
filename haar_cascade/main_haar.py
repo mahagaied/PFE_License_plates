@@ -4,7 +4,7 @@ import pytesseract
 pytesseract.pytesseract.tesseract_cmd = "C:\Program Files\Tesseract-OCR\\tesseract.exe"
 
 if __name__ == '__main__':
-    path = "../license_images/3.png"
+    path = "../license_images/2.png"
     image = cv2.imread(path)
     cv2.imshow('image', image)
     cv2.waitKey(0)

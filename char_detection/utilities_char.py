@@ -111,20 +111,52 @@ def crop_plate(img, coordinates):
 
 def char_recognition(plate,detected,coord):
     height, width, _ = plate.shape
-    grayscale = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
-    (T, thresh) = cv2.threshold(grayscale, 120, 255, cv2.THRESH_BINARY_INV)
-    #blur = cv2.GaussianBlur(grayscale, (5, 5), 0)
-    cv2.imshow("threshPlate", thresh)
-    cv2.waitKey(0)
+    #grayscale = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
+    #(T, thresh) = cv2.threshold(grayscale, 120, 255, cv2.THRESH_BINARY_INV)
+    # blur = cv2.GaussianBlur(thresh, (5, 5), 0)
+    imgFloat = plate.astype(np.float) / 255.
 
-    number_plate = pytesseract.image_to_string(thresh,
-                                               config='-c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    # Calculate channel K:
+    kChannel = 1 - np.max(imgFloat, axis=2)
+
+    # Convert back to uint 8:
+    kChannel = (255 * kChannel).astype(np.uint8)
+
+    # Threshold image:
+    binaryThresh = 120
+    _, binaryImage = cv2.threshold(kChannel, binaryThresh, 255, cv2.THRESH_BINARY_INV)
+
+    cv2.imshow("binary", binaryImage)
+    cv2.waitKey(0)
+    # binaryImage = cv2.GaussianBlur(binaryImage, (3, 3), 0)
+
+    # Use a little bit of morphology to clean the mask:
+    # Set kernel (structuring element) size:
+    kernelSize = 3
+    # Set morph operation iterations:
+    opIterations = 0
+    # Get the structuring element:
+    morphKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernelSize, kernelSize))
+    # Perform closing:
+    binaryImage = cv2.morphologyEx(binaryImage, cv2.MORPH_CLOSE, morphKernel, None, None, opIterations,
+                                   cv2.BORDER_REFLECT101)
+
+    cv2.imshow("binaryImage [closed]", binaryImage)
+    cv2.waitKey(0)
+    #-c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ
+    number_plate = pytesseract.image_to_string(binaryImage,
+                                               config='-l eng --oem 1 --psm 8')
+    alnum_plate = ""
+    for l in number_plate:
+        if l.isalnum():
+            alnum_plate = alnum_plate + l
     print(f"Plate Number : {number_plate}")
+    print(f"Plate Number : {alnum_plate}")
     print(coord)
-    img = cv2.putText(detected, number_plate, (coord[0], coord[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,
+    img = cv2.putText(detected, alnum_plate, (coord[0], coord[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,
                       cv2.LINE_AA)
 
-    boxes = pytesseract.image_to_boxes(grayscale)
+    boxes = pytesseract.image_to_boxes(plate)
     for b in boxes.splitlines():
         b = b.split(' ')
         x, y, w, h = int(b[1]), int(b[2]), int(b[3]), int(b[4])
